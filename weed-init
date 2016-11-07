@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# weed        Startup script for weed
+#
+# chkconfig: - 85 15
+# processname: weed
+# pidfile: /var/run/weed.pid
+# description: weed is a Distributed FileSystem to store milions of thumbs in single file
+#
+### BEGIN INIT INFO
+# Provides: weed
+# Required-Start: $local_fs $remote_fs $network
+# Required-Stop: $local_fs $remote_fs $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop weed
+### END INIT INFO
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+WEED=$(which weed)
+PIDFILE="/var/run/weed.pid"
+declare -A OPT=(
+
+                [port]=8080
+                [heartbeat]=20
+                [Timeout]=15 
+                [max]=50
+                [mserver]=master2.tune.pk:9333
+                [ip]=5.254.102.77
+                [DataDir]="/tunefiles/weed"
+#               [LogDir]="/var/log"
+                [publicUrl]="thumbs2.tunefiles.com"
+                [publicport]=8080
+
+                )
+
+#mkdir -p ${OPT[DataDir]}
+
+start() {
+
+     if [ ! -f $PIDFILE ];then
+        echo "Starting WeedFS Volume.."
+        $WEED volume -port=${OPT[port]} -pulseSeconds=${OPT[heartbeat]} -idleTimeout=${OPT[Timeout]} -max=${OPT[max]} -mserver=${OPT[mserver]} \
+                        -ip=${OPT[ip]} -dir=${OPT[DataDir]} -publicUrl=${OPT[publicUrl]} -port.public=${OPT[publicport]} &
+        echo $! > $PIDFILE
+     else
+        echo "WeedFS Volume is already running."
+        fi;
+}
+
+stop() {
+
+    if [[ -f $PIDFILE ]];then
+        PID=$(cat $PIDFILE)
+        echo "stopping WeedFS Volume.."
+        kill $PID
+        STATUS=$(ps -e| grep $PID > /dev/null 2>&1;echo $?)
+                if [[ $STATUS -eq 0 ]];then
+                        echo "Unable to stop WeedFS Volume."
+                else
+                        echo "WeedFS Volume is stopped."
+                        rm -f $PIDFILE
+                fi;
+        else
+                echo "WeedFS Volume is not running."
+        fi;
+}
+
+rh_status() {
+    status -p $PIDFILE $WEED
+}
+
+
+case $1 in
+  start)
+        start ;;
+
+  stop)
+        stop ;;
+
+  restart)
+        stop ;
+        start ;;
+
+  status)
+        rh_status ;;
+*)
+        echo "usage: $0 {start|stop|restart|status}" >&2
+        echo "Enable on boot: chkconfig weed on "
+        exit 1 ;;
+esac
