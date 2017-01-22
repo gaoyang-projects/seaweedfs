@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# weed        Startup script for weed
+#
+# chkconfig: - 85 15
+# processname: weed
+# pidfile: /var/run/weed.pid
+# description: weed is a Distributed FileSystem to store milions of thumbs in single file
+#
+### BEGIN INIT INFO
+# Provides: weed
+# Required-Start: $local_fs $remote_fs $network
+# Required-Stop: $local_fs $remote_fs $network
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: start and stop weed
+### END INIT INFO
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+#WEED=$(which weed)
+WEED='/usr/bin/weed'
+PIDFILE="/var/run/weed.pid"
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+declare -A OPT=(
+                [master]="master2.tune.pk"
+                [metadir]="/opt/weed/"
+                [heartbeat]=20
+                )
+
+start() {
+
+     if [ ! -f $PIDFILE ];then
+        echo "Starting WeedFS Master.."
+        $WEED master -pulseSeconds=${OPT[heartbeat]} -ip=${OPT[master]} -mdir=${OPT[metadir]} &
+        echo $! > $PIDFILE
+     else
+        echo "WeedFS Master is already running."
+        fi;
+}
+
+stop() {
+
+    if [[ -f $PIDFILE ]];then
+        PID=$(cat $PIDFILE)
+        echo "stopping WeedFS Master.."
+        kill $PID
+        STATUS=$(ps -e| grep $PID > /dev/null 2>&1;echo $?)
+                if [[ $STATUS -eq 0 ]];then
+                        echo "Unable to stop WeedFS master."
+                else
+                        echo "WeedFS Master is stopped."
+                        rm -f $PIDFILE
+                fi;
+        else
+                echo "WeedFS Master is not running."
+        fi;
+}
+
+rh_status() {
+    status -p $PIDFILE $WEED
+}
+
+
+case $1 in
+  start)
+        start ;;
+
+  stop)
+        stop ;;
+
+  restart)
+        stop ;
+        start ;;
+  status)
+        rh_status ;;
+*)
+        echo "usage: $0 {start|stop|restart|status}" >&2
+        echo "Enable on boot: chkconfig weed on "
+        exit 1 ;;
+esac
