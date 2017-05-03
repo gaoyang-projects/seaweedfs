@@ -26,11 +26,11 @@ declare -A OPT=(
                 [heartbeat]=20
                 [Timeout]=15 
                 [max]=50
-                [mserver]=master2.tune.pk:9333
+                [mserver]=master-host:9333
                 [ip]=5.254.102.77
-                [DataDir]="/tunefiles/weed"
+                [DataDir]="/data/weed"
 #               [LogDir]="/var/log"
-                [publicUrl]="thumbs2.tunefiles.com"
+                [publicUrl]="volume.host.com"
                 [publicport]=8080
 
                 )
